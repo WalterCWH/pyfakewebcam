@@ -273,6 +273,7 @@ class v4l2_pix_format(ctypes.Structure):
         ('sizeimage', ctypes.c_uint32),
         ('colorspace', v4l2_colorspace),
         ('priv', ctypes.c_uint32),
+        ('flags', ctypes.c_uint32)
     ]
 
 # RGB formats
@@ -359,6 +360,9 @@ V4L2_PIX_FMT_PJPG = v4l2_fourcc('P', 'J', 'P', 'G')
 V4L2_PIX_FMT_OV511 = v4l2_fourcc('O', '5', '1', '1')
 V4L2_PIX_FMT_OV518 = v4l2_fourcc('O', '5', '1', '8')
 V4L2_PIX_FMT_STV0680 = v4l2_fourcc('S', '6', '8', '0')
+
+# Pixel format flag
+V4L2_PIX_FMT_FLAG_PARTIAL_JPG = 0x0004
 
 
 #
@@ -1717,6 +1721,35 @@ class v4l2_format(ctypes.Structure):
         ('fmt', _u),
     ]
 
+class v4l2_selection(ctypes.Structure):
+    _fields_ = [
+        ('type', v4l2_buf_type),
+        ('target', ctypes.c_uint32),
+        ('flags', ctypes.c_uint32),
+        ('r', v4l2_rect),
+        ('reserved', ctypes.c_uint32 * 9),
+    ]
+
+#
+# Selection targets
+#
+
+V4L2_SEL_TGT_CROP = 0x0000
+V4L2_SEL_TGT_CROP_DEFAULT = 0x0001
+V4L2_SEL_TGT_CROP_BOUNDS = 0x0002
+V4L2_SEL_TGT_NATIVE_SIZE = 0x0003
+V4L2_SEL_TGT_COMPOSE = 0x0100
+V4L2_SEL_TGT_COMPOSE_DEFAULT = 0x0101
+V4L2_SEL_TGT_COMPOSE_BOUNDS = 0x0102
+V4L2_SEL_TGT_COMPOSE_PADDED = 0x0103
+
+#
+# Selection flags
+#
+
+V4L2_SEL_FLAG_GE = 1 << 0
+V4L2_SEL_FLAG_LE = 1 << 1
+V4L2_SEL_FLAG_KEEP_CONFIG = 1 << 2
 
 class v4l2_streamparm(ctypes.Structure):
     class _u(ctypes.Union):
@@ -1857,6 +1890,9 @@ VIDIOC_G_DV_PRESET = _IOWR('V', 85, v4l2_dv_preset)
 VIDIOC_QUERY_DV_PRESET = _IOR('V', 86, v4l2_dv_preset)
 VIDIOC_S_DV_TIMINGS = _IOWR('V', 87, v4l2_dv_timings)
 VIDIOC_G_DV_TIMINGS = _IOWR('V', 88, v4l2_dv_timings)
+
+VIDIOC_G_SELECTION = _IOWR('V', 94, v4l2_selection)
+VIDIOC_S_SELECTION = _IOWR('V', 95, v4l2_selection)
 
 VIDIOC_OVERLAY_OLD = _IOWR('V', 14, ctypes.c_int)
 VIDIOC_S_PARM_OLD = _IOW('V', 22, v4l2_streamparm)
