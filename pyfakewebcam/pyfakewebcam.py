@@ -19,7 +19,7 @@ class FakeWebcam:
     
     # TODO: add support for more pixfmts
     # TODO: add support for grayscale
-    def __init__(self, video_device, width, height, channels=3, input_pixfmt='RGB', output_pixfmt=_v4l2.V4L2_PIX_FMT_JPEG):
+    def __init__(self, video_device, width, height, channels=3, input_pixfmt='RGB', output_pixfmt=_v4l2.V4L2_PIX_FMT_JPEG, jpeg_format=''):
         
         if channels != 3:
             raise NotImplementedError('Code only supports inputs with 3 channels right now. You tried to intialize with {} channels'.format(channels))
@@ -36,8 +36,11 @@ class FakeWebcam:
         self._video_device = os.open(video_device, os.O_WRONLY | os.O_SYNC)
                     
         self._settings = _v4l2.v4l2_format()
+        self._selection = _v4l2.v4l2_selection()
         self._settings.type = _v4l2.V4L2_BUF_TYPE_VIDEO_OUTPUT
         self._settings.fmt.pix.pixelformat = output_pixfmt
+        if self._settings.fmt.pix.pixelformat == _v4l2.V4L2_PIX_FMT_JPEG and jpeg_format == 'partial':
+            self._settings.fmt.pix.flags = _v4l2.V4L2_PIX_FMT_FLAG_PARTIAL_JPG
         self._settings.fmt.pix.width = width
         self._settings.fmt.pix.height = height
         self._settings.fmt.pix.field = _v4l2.V4L2_FIELD_NONE
@@ -106,6 +109,22 @@ class FakeWebcam:
             raise Exception('frame width does not match the width of webcam device: {}!={}\n'.format(self._settings.fmt.pix.width, frame.shape[1]))
         if frame.shape[2] != self._channels:
             raise Exception('num frame channels does not match the num channels of webcam device: {}!={}\n'.format(self._channels, frame.shape[2]))
+
+        buffer_string = cv2.imencode('.jpg', frame)[1]
+        os.write(self._video_device, buffer_string)
+
+    def schedule_frame_partial_jpeg(self, frame):
+        self._selection.type = _v4l2.V4L2_BUF_TYPE_VIDEO_OUTPUT
+        self._selection.target = _v4l2.V4L2_SEL_TGT_CROP
+        if frame.shape[0] == self._settings.fmt.pix.height and frame.shape[1] == self._settings.fmt.pix.width:
+            self._selection.r.left = 0
+            self._selection.r.top = 0
+        else:
+            self._selection.r.left = 250
+            self._selection.r.top = 250
+        self._selection.r.width = frame.shape[1]
+        self._selection.r.height = frame.shape[0]
+
 
         buffer_string = cv2.imencode('.jpg', frame)[1]
         os.write(self._video_device, buffer_string)
