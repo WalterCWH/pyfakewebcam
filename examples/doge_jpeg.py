@@ -11,5 +11,5 @@ cam.print_capabilities()
 jpeg_frame = cv2.imread('doge1.jpg')
 
 while True:
-    cam.schedule_frame_jpeg(jpeg_frame)
+    cam.schedule_frame_partial_jpeg(jpeg_frame)
     time.sleep(1/60)
